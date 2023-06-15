@@ -6,13 +6,16 @@ export async function load(request){
 
     const place = url.searchParams.get('place')
     if (!place)return {place: ''}
+
+    // https://developer.here.com/documentation/geocoding-search-api/dev_guide/index.html
     const queryurl = `https://geocode.search.hereapi.com/v1/geocode?q=${place}&apiKey=${YOUR_API_KEY}`
     const response = await fetch(queryurl)
     const HERE: ResultType= <ResultType> await response.json()
 
-    const [minX,minY, maxX,maxY] = [-7.68,49.75,2.85,58.99]
+    const [minX,minY, maxX,maxY] = [-7.68,49.75,2.85,58.99] // UK bounding box
 
 
+    // ensures that everything result is inside the UK
     const addresses = HERE.items.filter(d=>{
         return ((d.position.lat < maxY) &&
         (d.position.lng < maxX) &&
