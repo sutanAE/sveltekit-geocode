@@ -12,3 +12,6 @@ YOUR_API_KEY=njmkjahwerQWERjifaoih1239yh
 2. git clone
 
 3. npm i 
+
+
+![image](map.gif)
