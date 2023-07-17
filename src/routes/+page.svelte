@@ -1,8 +1,10 @@
 <script lang="ts">
     import { browser } from '$app/environment';
-        import type { LatLng, LatLngBounds } from 'leaflet';
+    import { base } from '$app/paths';
+        import type { LatLng, LatLngBounds, TileLayer } from 'leaflet';
 // import { latLng } from 'leaflet';
     import { onMount } from 'svelte';
+    import { each } from 'svelte/internal';
 
     
     
@@ -11,22 +13,52 @@
 
     const {addresses}  = data
 
+    
+    let basemaps = <TileLayer[]>[]
+    let basemapFunc: (index: number)=>void;
 
     onMount(async ()=>{
         if (browser){
             const L = await import('leaflet')
+
+
+            // STEP 1 - initialise the map
             let map = L.map('map').setView([51.505, -0.09], 13);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+
+            // STEP 2 - provide basemap options; openstreetmap, esri world topo map, and esri worldimagery
+            let osmtiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 20,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(map);
 
+            let Esri_WorldTopoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20,
+                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+            });
+
+            let Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            });
+            
+            basemaps =[...[osmtiles,Esri_WorldTopoMap,Esri_WorldImagery]] // using spread operator for Svelte reactivity
+
+            // STEP 2.5 - add some functions to update the basemaps if the button is clicked
+            basemapFunc = (index: number)=>{
+                basemaps.forEach(p=>p.removeFrom(map))
+                basemaps[index].addTo(map).bringToBack()
+            }
+
+            // STEP 3 - add some WMS layers
             const wmsLayer = L.tileLayer.wms('https://10.0.0.6/geoserver/wms', {
                 format: 'image/png',
                 transparent: true,
                 layers: "ambersidegdb:power_lines_fme"
             }).addTo(map);
 
+            
+
+            // STEP 4 - SEARCH FUNCTIONS!!
             const layergroup = L.layerGroup()
 
             let bound: LatLngBounds | null = null
@@ -85,7 +117,14 @@
 <div class='main'>
     <div id='map'></div>
 </div>
+<div>
+    <!-- <button on:click={removewmsfunction}>removeWms</button> -->
+</div>
 
+
+{#each basemaps as b,i}
+    <button on:click={()=>{basemapFunc(i)}}>basemap - {i}</button>
+{/each}
 
 <style>
     .searchbar {
