@@ -24,7 +24,7 @@
             const wmsLayer = L.tileLayer.wms('https://10.0.0.6/geoserver/wms', {
                 format: 'image/png',
                 transparent: true,
-                layers: "cite:power_lines_fme"
+                layers: "ambersidegdb:power_lines_fme"
             }).addTo(map);
 
             const layergroup = L.layerGroup()
